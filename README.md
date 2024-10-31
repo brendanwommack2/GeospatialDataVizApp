@@ -25,9 +25,9 @@ README.md # Project documentation
 ## Technologies Used
 - **Frontend**: JavaScript, HTML, CSS
 - **Backend**: Python (Flask/Django, if applicable)
-- **APIs**: 
+- **APIs**: leaflet.js
 
 ## Getting Started
 1. Clone the repository:
    ```bash
-   git clone https://github.com/username/GeospatialDataVizApp.git
+   git clone https://github.com/brendanwommack2/GeospatialDataVizApp.git
