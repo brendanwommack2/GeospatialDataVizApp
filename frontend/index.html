@@ -35,7 +35,7 @@
   <script>
     // Initialize the map
     const map = L.map('map').setView([37.7749, -122.4194], 13);
-    
+  
     // Add base tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -48,54 +48,42 @@
       messageDiv.style.color = isError ? 'red' : 'green';
       messageDiv.textContent = message;
     }
-
-    // Function to handle file upload
+  
+    // Function to handle file upload and send to Flask backend
     document.getElementById('file-upload').addEventListener('change', function(event) {
       const file = event.target.files[0];
-      const fileType = file.name.split('.').pop().toLowerCase();
+      const formData = new FormData();
+      formData.append("file", file);
   
-      if (fileType === 'geojson') {
-        // Read and display GeoJSON file
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          try {
-            const geojsonData = JSON.parse(e.target.result);
-            L.geoJSON(geojsonData).addTo(map); // Display on map
-            showMessage("GeoJSON data loaded successfully.");
-          } catch (error) {
-            showMessage("Error parsing GeoJSON file.", true);
+      // Send file to the Flask backend via /upload endpoint
+      fetch("http://127.0.0.1:5000/upload", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          showMessage(data.error, true);
+        } else {
+          showMessage(data.message);
+          // Optionally: Fetch the file back from the server and display it on the map
+          if (file.name.endsWith('.geojson')) {
+            fetch(`http://127.0.0.1:5000/data/${file.name}`)
+              .then(response => response.json())
+              .then(geojsonData => {
+                L.geoJSON(geojsonData).addTo(map);
+              })
+              .catch(error => showMessage("Error loading GeoJSON data.", true));
           }
-        };
-        reader.readAsText(file);
-  
-      } else if (fileType === 'csv') {
-        // Parse and display CSV
-        Papa.parse(file, {
-          header: true,
-          complete: function(results) {
-            const csvData = results.data;
-            showMessage("CSV data parsed successfully.");
-            // Convert to GeoJSON or create layers here
-          },
-          error: function() {
-            showMessage("Error parsing CSV file.", true);
-          }
-        });
-  
-      } else if (fileType === 'zip') {
-        // Parse Shapefile
-        shp(file).then(function(geojson) {
-          L.geoJSON(geojson).addTo(map); // Display on map
-          showMessage("Shapefile loaded successfully.");
-        }).catch(err => {
-          console.error("Shapefile error:", err);
-          showMessage("Error loading Shapefile.", true);
-        });
-      } else {
-        showMessage("Unsupported file format.", true);
-      }
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        showMessage("File upload failed.", true);
+      });
     });
   </script>
+  
 
 </body>
 </html>
